@@ -52,7 +52,7 @@ A lightweight, high-performance, system-wide **Singlish to Sinhala converter** f
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/<YOUR_USERNAME>/sinhala-keyboard.git
+   git clone https://github.com/AyodhyaSankalpa/sinhala-keyboard.git
    cd sinhala-keyboard
    ```
 
