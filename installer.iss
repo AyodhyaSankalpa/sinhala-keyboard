@@ -1,6 +1,6 @@
 [Setup]
 AppName=Sinhala Keyboard
-AppVersion=1.0
+AppVersion=1.0.0
 DefaultDirName={autopf}\SinhalaKeyboard
 DefaultGroupName=Sinhala Keyboard
 OutputDir=output

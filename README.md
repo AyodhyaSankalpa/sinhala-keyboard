@@ -1,14 +1,15 @@
 # 🇱🇰 Sinhala Singlish Keyboard for Windows
 
-A lightweight, high-performance, system-wide **Singlish to Sinhala converter** for Windows. Built using Python, low-level Win32 APIs, and dynamic keystroke injection.
+A lightweight, high-performance, system-wide **Singlish to Sinhala converter** for Windows. Built using Python, low-level Win32 APIs, dynamic keystroke injection, and following the standard phonetic layout.
 
 ---
 
 ## ✨ Features
 
 - ⚡ **Zero-Lag System-Wide Typing:** Works seamlessly in any Windows app (browsers, Word, Notepad, chat apps, IDEs).
-- 🔤 **Full Rakaransaya (ක්‍ර) & Yansaya (ක්‍ය) Support:** Built-in Zero-Width Joiner (ZWJ) handling for complex Sinhala conjuncts.
-- 🎯 **Dynamic Buffer Diffing:** Intelligently replaces typed text in real time using minimal backspace sequences.
+- 🔤 **Complete Phonetic & UCSC Layout Support:** All vowels, consonants, aspirated letters, and pre-nasalized letters.
+- 🎯 **Rakaransaya, Yansaya & Gayanukitta:** `kra` -> ක්‍ර, `kya` -> ක්‍ය, `kru` -> කෘ, `kruu` -> කෲ.
+- 🔄 **Dynamic Buffer Diffing:** Intelligently replaces typed text in real time using minimal backspace sequences.
 - 🔕 **Silent Background Execution:** Zero CPU overhead, runs silently without distracting windows.
 - 📦 **Standalone Installer:** Portable executable and setup installer provided (no Python required on target PCs).
 
@@ -25,26 +26,45 @@ A lightweight, high-performance, system-wide **Singlish to Sinhala converter** f
 
 ## 📖 Singlish Typing Guide
 
-### 1. Rakaransaya (රකාරාංශය) & Yansaya (යන්සය)
-| Singlish | Sinhala Output | Example Word |
-|---|---|---|
-| `kra` | **ක්‍ර** | `kramaya` -> ක්‍රමය |
-| `kri` | **ක්‍රි** | `kriyaawa` -> ක්‍රියාව |
-| `kree` | **ක්‍රේ** | `kreesha` -> ක්‍රේෂ |
-| `pra` | **ප්‍ර** | `praarthanaa` -> ප්‍රාර්ථනා |
-| `shree` | **ශ්‍රී** | `shree` -> ශ්‍රී |
-| `kya` | **ක්‍ය** | `kya` -> ක්‍ය |
-| `kyaa` | **ක්‍යා** | `vaakyaa` -> වාක්‍යා |
-| `vya` | **ව්‍ය** | `vyaapaaraya` -> ව්‍යාපාරය |
-| `sathya` | **සත්‍ය** | `sathya` -> සත්‍ය |
-| `vidyaawa` | **විද්‍යාව** | `vidyaawa` -> විද්‍යාව |
+### 1. ස්වර අක්ෂර (Independent Vowels)
+- **a** -> අ | **aa** -> ආ
+- **A** -> ඇ | **Aa** / **AA** -> ඈ
+- **i** -> ඉ | **ii** -> ඊ
+- **u** -> උ | **uu** -> ඌ
+- **R** -> ඍ | **Ru** -> ඎ
+- **e** -> එ | **ee** -> ඒ
+- **ai** -> ඓ
+- **o** -> ඔ | **oo** -> ඕ
+- **au** / **ou** -> ඖ
 
-### 2. Common Phonetic Consonants
-- **k** -> ක් | **ka** -> ක | **kaa** -> කා | **ki** -> කි | **kee** -> කේ
-- **g** -> ග් | **ga** -> ග | **gaa** -> ගා | **gi** -> ගි | **gee** -> ගේ
-- **t** / **th** -> ත්, ත | **T** -> ට්, ට | **d** -> ද්, ද | **D** -> ඩ්, ඩ
-- **n** -> න්, න | **N** -> ණ්, ණ | **m** -> ම්, ම | **p** -> ප්, ප
-- **s** -> ස්, ස | **sh** -> ශ්, ශ | **S** -> ෂ්, ෂ
+### 2. ව්‍යංජන අක්ෂර (Consonants)
+- **k** -> ක | **g** -> ග | **ch** -> ච | **j** -> ජ
+- **t** -> ට | **d** -> ඩ | **th** -> ත | **dh** / **q** -> ද
+- **n** -> න | **N** -> ණ | **p** -> ප | **b** -> බ | **m** -> ම
+- **y** -> ය | **r** -> ර | **l** -> ල | **L** -> ළ
+- **w** / **v** -> ව | **s** -> ස | **sh** -> ශ | **S** / **Sh** -> ෂ
+- **h** -> හ | **f** -> ෆ
+
+### 3. මහප්‍රාණ අක්ෂර (Aspirated Consonants)
+- **kh** -> ඛ | **gh** -> ඝ | **chh** -> ඡ
+- **T** -> ඨ | **D** -> ඪ
+- **thh** -> ථ | **dhh** / **qh** -> ධ
+- **ph** -> ඵ | **bh** -> භ
+
+### 4. සඤ්ඤක සහ විශේෂ අක්ෂර (Sannaka & Special)
+- **zg** / **ng** -> ඟ
+- **zj** -> ඦ
+- **zd** -> ඬ
+- **zdh** / **zq** -> ඳ
+- **zk** -> ඤ | **zh** -> ඥ
+- **B** -> ඹ | **Lu** -> ළු
+- **x** / **zn** -> ං | **X** -> ඞ | **H** -> ඃ
+
+### 5. රකාරාංශය, යන්සය සහ ගයනුකිත්ත (Conjuncts & Signs)
+- **kra** -> **ක්‍ර** (`kramaya` -> ක්‍රමය, `kri` -> ක්‍රි, `kree` -> ක්‍රේ)
+- **kya** -> **ක්‍ය** (`kyaa` -> ක්‍යා, `vyaapaaraya` -> ව්‍යාපාරය)
+- **kru** -> **කෘ** | **kruu** -> **කෲ**
+- **kA** -> **කැ** | **kAa** / **kAA** -> **කෑ**
 
 ---
 

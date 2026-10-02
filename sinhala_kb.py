@@ -1,5 +1,5 @@
-# Singlish -> Sinhala global keyboard (Windows)
-import ctypes, os, threading, winsound
+import ctypes, os, threading, queue
+import tkinter as tk
 from ctypes import wintypes
 from pynput import keyboard, mouse
 
@@ -7,21 +7,72 @@ from pynput import keyboard, mouse
 HAL = '්'
 ZWJ = '\u200d'
 CONS = {
-    'k':'ක','kh':'ඛ','g':'ග','gh':'ඝ','ng':'ඟ','ch':'ච','chh':'ඡ','j':'ජ','jh':'ඣ',
-    'T':'ට','Th':'ඨ','D':'ඩ','Dh':'ඪ','N':'ණ',
-    't':'ත','th':'ත','d':'ද','dh':'ද','n':'න','nd':'ඳ',
-    'p':'ප','ph':'ඵ','b':'බ','bh':'භ','m':'ම','mb':'ඹ',
-    'y':'ය','r':'ර','l':'ල','L':'ළ','w':'ව','v':'ව',
-    's':'ස','sh':'ශ','S':'ෂ','h':'හ','f':'ෆ',
+    # 1. Standard Consonants
+    'k': 'ක', 'kh': 'ඛ',
+    'g': 'ග', 'gh': 'ඝ',
+    'ch': 'ච', 'chh': 'ඡ',
+    'j': 'ජ', 'jh': 'ඣ',
+    't': 'ට', 'T': 'ඨ',
+    'd': 'ඩ', 'D': 'ඪ',
+    'th': 'ත', 'thh': 'ථ',
+    'dh': 'ද', 'dhh': 'ධ',
+    'q': 'ද', 'qh': 'ධ',
+    'n': 'න', 'N': 'ණ',
+    'p': 'ප', 'ph': 'ඵ',
+    'b': 'බ', 'bh': 'භ',
+    'B': 'ඹ',
+    'm': 'ම',
+    'y': 'ය',
+    'r': 'ර',
+    'l': 'ල', 'L': 'ළ',
+    'w': 'ව', 'v': 'ව',
+    's': 'ස', 'sh': 'ශ', 'Sha': 'ෂ', 'Sh': 'ෂ', 'S': 'ෂ',
+    'h': 'හ',
+    'f': 'ෆ',
+
+    # 2. Sannaka & Nasals
+    'zg': 'ඟ', 'ng': 'ඟ',
+    'zj': 'ඦ',
+    'zd': 'ඬ',
+    'zdh': 'ඳ', 'zq': 'ඳ', 'nd': 'ඳ',
+    'zk': 'ඤ',
+    'zh': 'ඥ',
+    'mb': 'ඹ',
 }
-VSIGN = {'a':'','aa':'ා','ae':'ැ','aae':'ෑ','i':'ි','ii':'ී','u':'ු','uu':'ූ',
-         'e':'ෙ','ee':'ේ','ai':'ෛ','o':'ො','oo':'ෝ','au':'ෞ'}
-VIND  = {'a':'අ','aa':'ආ','ae':'ඇ','aae':'ඈ','i':'ඉ','ii':'ඊ','u':'උ','uu':'ඌ',
-         'e':'එ','ee':'ඒ','ai':'ඓ','o':'ඔ','oo':'ඕ','au':'ඖ'}
-SPECIAL = {'x':'ං','H':'ඃ'}
+VSIGN = {
+    'ruu': 'ෲ', 'ru': 'ෘ',
+    'Aa': 'ෑ', 'AA': 'ෑ', 'A': 'ැ',
+    'aae': 'ෑ', 'ae': 'ැ',
+    'aa': 'ා', 'a': '',
+    'ii': 'ී', 'i': 'ි',
+    'uu': 'ූ', 'u': 'ු',
+    'ee': 'ේ', 'e': 'ෙ',
+    'ai': 'ෛ',
+    'oo': 'ෝ', 'o': 'ො',
+    'au': 'ෞ', 'ou': 'ෞ',
+}
+VIND  = {
+    'Aa': 'ඈ', 'AA': 'ඈ', 'A': 'ඇ',
+    'aae': 'ඈ', 'ae': 'ඇ',
+    'aa': 'ආ', 'a': 'අ',
+    'ii': 'ඊ', 'i': 'ඉ',
+    'uu': 'ඌ', 'u': 'උ',
+    'Ru': 'ඎ', 'R': 'ඍ',
+    'ee': 'ඒ', 'e': 'එ',
+    'ai': 'ඓ',
+    'oo': 'ඕ', 'o': 'ඔ',
+    'au': 'ඖ', 'ou': 'ඖ',
+}
+SPECIAL = {
+    'x': 'ං',
+    'zn': 'ං',
+    'X': 'ඞ',
+    'H': 'ඃ',
+}
 
 C_KEYS = sorted(CONS, key=len, reverse=True)
 V_KEYS = sorted(VSIGN, key=len, reverse=True)
+S_KEYS = sorted(SPECIAL, key=len, reverse=True)
 
 def _match(keys, s, i):
     for k in keys:
@@ -36,6 +87,14 @@ def convert(s):
         if c:
             i += len(c)
             base = CONS[c]
+
+            # Gayanukitta (ru -> ෘ, ruu -> ෲ)
+            if c != 'r' and s.startswith(('ruu', 'ru'), i):
+                gv = 'ruu' if s.startswith('ruu', i) else 'ru'
+                out.append(base + VSIGN[gv])
+                i += len(gv)
+                continue
+
             # Rakaransaya ('r')
             if c != 'r' and i < len(s) and s[i].lower() == 'r':
                 base += HAL + ZWJ + 'ර'
@@ -54,7 +113,12 @@ def convert(s):
         v = _match(V_KEYS, s, i)
         if v:
             out.append(VIND[v]); i += len(v); continue
-        out.append(SPECIAL.get(s[i], s[i])); i += 1
+        
+        sp = _match(S_KEYS, s, i)
+        if sp:
+            out.append(SPECIAL[sp]); i += len(sp); continue
+
+        out.append(s[i]); i += 1
     return ''.join(out)
 
 # ---------- 2. SendInput (unicode typing) ----------
@@ -109,15 +173,89 @@ def refresh():
     send(len(shown) - p, new[p:])
     shown = new
 
-def beep(freq):
-    threading.Thread(target=winsound.Beep, args=(freq, 120), daemon=True).start()
+# ---------- 4. Transparent OSD Popup Indicator ----------
+class OSDPopup:
+    def __init__(self):
+        self.q = queue.Queue()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
+
+    def show(self, is_sinhala):
+        self.q.put(is_sinhala)
+
+    def _run(self):
+        root = tk.Tk()
+        root.overrideredirect(True)
+        root.attributes('-topmost', True)
+        root.attributes('-alpha', 0.90)
+        root.configure(bg='#181825')
+
+        w, h = 200, 50
+        sw = root.winfo_screenwidth()
+        sh = root.winfo_screenheight()
+        x = sw - w - 30
+        y = sh - h - 60
+        root.geometry(f"{w}x{h}+{x}+{y}")
+
+        frame = tk.Frame(root, bg='#181825', highlightbackground='#313244', highlightthickness=1)
+        frame.pack(fill='both', expand=True, padx=2, pady=2)
+
+        lbl_icon = tk.Label(frame, text="", font=("Segoe UI Emoji", 15), bg='#181825')
+        lbl_icon.pack(side='left', padx=(12, 6))
+
+        lbl_text = tk.Label(frame, text="", font=("Nirmala UI", 12, "bold"), bg='#181825')
+        lbl_text.pack(side='left', padx=(0, 12))
+
+        root.withdraw()
+
+        # Non-activating floating tool window (never steals typing focus)
+        hwnd = root.winfo_id()
+        GWL_EXSTYLE = -20
+        WS_EX_NOACTIVATE = 0x08000000
+        WS_EX_TOOLWINDOW = 0x00000080
+        for h_wnd in (hwnd, user32.GetParent(hwnd)):
+            if h_wnd:
+                ex = user32.GetWindowLongW(h_wnd, GWL_EXSTYLE)
+                user32.SetWindowLongW(h_wnd, GWL_EXSTYLE, ex | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)
+
+        hide_id = [None]
+
+        def _hide():
+            root.withdraw()
+
+        def _poll():
+            while not self.q.empty():
+                is_sinhala = self.q.get_nowait()
+                if hide_id[0]:
+                    root.after_cancel(hide_id[0])
+                    hide_id[0] = None
+
+                if is_sinhala:
+                    lbl_icon.config(text="🇱🇰")
+                    lbl_text.config(text="සිංහල ON", fg="#00E5FF")
+                    frame.config(highlightbackground="#00B4D8")
+                else:
+                    lbl_icon.config(text="🔤")
+                    lbl_text.config(text="English", fg="#E2E8F0")
+                    frame.config(highlightbackground="#64748B")
+
+                root.deiconify()
+                user32.ShowWindow(hwnd, 8)  # 8 = SW_SHOWNA (show without activating)
+                hide_id[0] = root.after(1100, _hide)
+
+            root.after(40, _poll)
+
+        root.after(40, _poll)
+        root.mainloop()
+
+osd = OSDPopup()
 
 def down(vk):
     return bool(user32.GetAsyncKeyState(vk) & 0x8000)
 
 MODS = {0x10, 0x11, 0x12, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0x14, 0x5B, 0x5C}
 
-# ---------- 4. Global keyboard hook ----------
+# ---------- 5. Global keyboard hook ----------
 def win_filter(msg, data):
     global enabled, buffer
     if data.flags & 0x10:            # apey own injected keys -> ignore
@@ -132,7 +270,7 @@ def win_filter(msg, data):
     if is_down and ctrl and not alt and vk == 0x20:    # Ctrl+Space = ON/OFF
         enabled = not enabled
         reset()
-        beep(1200 if enabled else 500)
+        osd.show(enabled)
         listener.suppress_event()
 
     if not enabled or vk in MODS:
@@ -145,8 +283,6 @@ def win_filter(msg, data):
         if is_down:
             ch = chr(vk)
             if not (down(0x10) != bool(user32.GetKeyState(0x14) & 1)):
-                ch = ch.lower()
-            if ch.lower() in 'aeiou':
                 ch = ch.lower()
             buffer += ch
             refresh()
@@ -163,6 +299,5 @@ def win_filter(msg, data):
 
 listener = keyboard.Listener(win32_event_filter=win_filter)
 mouse.Listener(on_click=lambda *a: reset()).start()
-beep(800)
 listener.start()
 listener.join()
